@@ -6,7 +6,7 @@
   "scripts": {
     "eslint": "eslint **/*.ts",
     "eslint:fix": "eslint **/*.ts --fix",
-    "serve": " ts-node index.ts",
+    "exec": " ts-node index.ts",
     "fmt": "prettier --write src/** && eslint --ext .js,.ts **/* --fix ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
