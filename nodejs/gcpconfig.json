@@ -6,10 +6,10 @@
    "projectId": "automated-firebase-test",
    "locationId": "asia-northeast1",
    "android": {
-    "packageName": "com.yapatta.testapp"
+    "packageName": "com.yuziroppe.testapp"
    },
    "ios": {
-    "bundleId": "com.yapatta.testapp"
+    "bundleId": "com.yuziroppe.testapp"
    }
   }
  }
