@@ -1,9 +1,9 @@
 {
  "gcp": {
-  "projectName": "automated-firebase-test",
-  "projectId": "automated-firebase-test",
+  "projectName": "automated-firebase-test7",
+  "projectId": "automated-firebase-test7",
   "firebase": {
-   "projectId": "automated-firebase-test",
+   "projectId": "automated-firebase-test7",
    "locationId": "asia-northeast1",
    "android": {
     "packageName": "com.yapatta.testapp"

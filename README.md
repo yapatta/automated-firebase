@@ -6,9 +6,10 @@ Automated Firebase Project Setup CLI Tool
 
 1. install gcloud command-line tool into your host
 1. setup application default credentials for authentication: `gcloud beta auth application-default login`
+1. export credentials path, ex: `export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcloud/application_default_credentials.json"`
 1. enable gcp and firebase API access
 1. set current directory to `./nodejs`
-1. prepare config file such as `config.json`
+1. prepare config file such as `gcpconfig.json`
 1. run: `npm run exec [filename]`
 
 ## TODO

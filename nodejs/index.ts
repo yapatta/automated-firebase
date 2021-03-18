@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { cloudresourcemanager_v1, firebase_v1beta1, google } from 'googleapis';
 import fs from 'fs';
 
 interface JSONConfig {
@@ -31,11 +31,10 @@ const config: JSONConfig = JSON.parse(fs.readFileSync(firstArg, 'utf8'));
 
 async function main() {
   const authClient = await authorize();
+  google.options({ auth: authClient });
 
   console.log('[step 1] creating GCP project');
   const projectNumber = await createGcpProjectIfNotExist(authClient);
-
-  google.options({ auth: authClient });
 
   console.log('[step 2] creating firebase project');
   const firebaseProjectName = await createFirebaseProjectIfNotExist(
@@ -51,6 +50,10 @@ async function main() {
   await outputAndroidConfig(firebaseProjectName);
   console.log('[step 6] writing ios app config to file');
   await outputIosConfig(firebaseProjectName);
+}
+
+async function sleep(msec: number) {
+  return new Promise((resolve) => setTimeout(resolve, msec));
 }
 
 async function authorize() {
@@ -99,22 +102,32 @@ async function createGcpProjectIfNotExist(
       throw new Error('bad request: ' + String(operation.status));
     }
 
-    const createdProject = await cloudresourcemanager.projects.get({
-      projectId: config.gcp.projectId,
-    });
-
-    if (createdProject.status !== 200) {
-      throw new Error('bad request: ' + String(operation.status));
+    // NOTE: after creating GCP project, sometimes cannot get gcp project due to time problems
+    let createdProject: cloudresourcemanager_v1.Schema$Project;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const fetchedProjects = (await cloudresourcemanager.projects.list()).data;
+      const cp = fetchedProjects.projects?.find((project) => {
+        return (
+          project.projectId === config.gcp.projectId &&
+          project.lifecycleState === 'ACTIVE'
+        );
+      });
+      if (cp) {
+        createdProject = cp;
+        break;
+      }
+      await sleep(1000);
     }
 
-    projectNumber = createdProject.data.projectNumber ?? '';
+    projectNumber = createdProject.projectNumber ?? '';
 
     console.log('created GCP project:', projectNumber);
   } else {
     projectNumber = selectedProject.projectNumber ?? '';
 
     console.log(
-      'skiped this step since Firebase project has already been created:',
+      'skiped this step since GCP project has already been created:',
       projectNumber,
     );
   }
@@ -149,18 +162,34 @@ async function createFirebaseProjectIfNotExist(
       throw new Error('bad request: ' + String(operation.status));
     }
 
-    firebaseName = operation.data.name ?? '';
+    // NOTE: after creating Firebase Project, sometimes cannot get App due to time problems
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const projectList = (await firebase.projects.list()).data;
 
-    if (firebaseName === '') {
-      throw new Error('unvalidated firebase name');
+      const pj = projectList.results?.find((result) => {
+        return (
+          // projectNumber is globally unique: refer to 'https://firebase.google.com/docs/projects/api/reference/rest/v1beta1/projects#FirebaseProject'
+          result.projectNumber === projectNumber && result.state === 'ACTIVE'
+        );
+      });
+
+      if (pj) {
+        break;
+      }
+      await sleep(1000);
     }
 
+    firebaseName = 'projects/' + config.gcp.projectName;
+
     await firebase.projects.defaultLocation.finalize({
-      parent: firebaseName,
+      parent: 'projects/' + projectNumber,
       requestBody: {
         locationId: config.gcp.firebase.locationId,
       },
     });
+
+    console.log('finalized location:', config.gcp.firebase.locationId);
 
     console.log('created firebase project:', firebaseName);
   } else {
@@ -243,18 +272,25 @@ async function createIosAppIfNotExist(projectName: string) {
 }
 
 async function outputAndroidConfig(projectName: string): Promise<void> {
-  const appList = (
-    await firebase.projects.androidApps.list({
-      parent: projectName,
-    })
-  ).data;
+  // NOTE: after creating Android App, sometimes cannot get App due to time problems
+  let selectedApp: firebase_v1beta1.Schema$AndroidApp;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const appList = (
+      await firebase.projects.androidApps.list({
+        parent: projectName,
+      })
+    ).data;
 
-  const selectedApp = appList.apps?.find((app) => {
-    return app.packageName === config.gcp.firebase.android.packageName;
-  });
+    const app = appList.apps?.find((app) => {
+      return app.packageName === config.gcp.firebase.android.packageName;
+    });
 
-  if (selectedApp === undefined) {
-    throw new Error('android app not found');
+    if (app) {
+      selectedApp = app;
+      break;
+    }
+    await sleep(1000);
   }
 
   const appConfig = (
@@ -281,23 +317,30 @@ async function outputAndroidConfig(projectName: string): Promise<void> {
 }
 
 async function outputIosConfig(projectName: string): Promise<void> {
-  const appList = (
-    await firebase.projects.iosApps.list({
-      parent: projectName,
-    })
-  ).data;
+  // NOTE: after creating IOS App, sometimes cannot get App due to time problems
+  let selectedApp: firebase_v1beta1.Schema$IosApp;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const appList = (
+      await firebase.projects.iosApps.list({
+        parent: projectName,
+      })
+    ).data;
 
-  const selectedApps = appList.apps?.find((app) => {
-    return app.bundleId === config.gcp.firebase.ios.bundleId;
-  });
+    const app = appList.apps?.find((app) => {
+      return app.bundleId === config.gcp.firebase.ios.bundleId;
+    });
 
-  if (selectedApps === undefined) {
-    throw new Error('ios app not found');
+    if (app) {
+      selectedApp = app;
+      break;
+    }
+    await sleep(1000);
   }
 
   const appConfig = (
     await firebase.projects.iosApps.getConfig({
-      name: selectedApps.name! + '/config',
+      name: selectedApp.name! + '/config',
     })
   ).data;
 
@@ -319,5 +362,5 @@ async function outputIosConfig(projectName: string): Promise<void> {
 }
 
 main().catch((err: Error) => {
-  console.error('message: ', err.message);
+  console.error('error message: ', err.message);
 });
