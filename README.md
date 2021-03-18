@@ -10,7 +10,7 @@ Automated Firebase Project Setup CLI Tool
 1. enable gcp and firebase API access
 1. set current directory to `./nodejs`
 1. prepare config file such as `gcpconfig.json`
-1. run: `npm run exec [filename]`
+1. run: `npm run exec [json filepath]`, ex: `npm run exec gcpconfig.json`
 
 ## TODO
 
