@@ -182,6 +182,8 @@ async function createFirebaseProjectIfNotExist(
 
     firebaseName = 'projects/' + config.gcp.projectName;
 
+    console.log('created firebase project:', firebaseName);
+
     await firebase.projects.defaultLocation.finalize({
       parent: 'projects/' + projectNumber,
       requestBody: {
@@ -190,8 +192,6 @@ async function createFirebaseProjectIfNotExist(
     });
 
     console.log('finalized location:', config.gcp.firebase.locationId);
-
-    console.log('created firebase project:', firebaseName);
   } else {
     firebaseName = selectedProject.name ?? '';
     if (firebaseName === '') {
@@ -230,7 +230,7 @@ async function createAndroidAppIfNotExist(projectName: string) {
       throw new Error('bad request: ' + String(operation.status));
     }
 
-    console.log('created new Android App!!:', operation);
+    console.log('created new Android App on', projectName);
   } else {
     console.log(
       'skiped this step since Android App has already been created:',
@@ -262,7 +262,7 @@ async function createIosAppIfNotExist(projectName: string) {
       throw new Error('bad request: ' + String(operation.status));
     }
 
-    console.log('created new IOS App!!:', operation);
+    console.log('created new IOS App on', projectName);
   } else {
     console.log(
       'skiped this step since IOS App has already been created:',
