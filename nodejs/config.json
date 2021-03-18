@@ -1,0 +1,16 @@
+{
+ "gcp": {
+  "projectName": "automated-firebase-test",
+  "projectId": "automated-firebase-test",
+  "firebase": {
+   "projectId": "automated-firebase-test",
+   "locationId": "asia-northeast1",
+   "android": {
+    "packageName": "com.yapatta.testapp"
+   },
+   "ios": {
+    "bundleId": "com.yapatta.testapp"
+   }
+  }
+ }
+}
