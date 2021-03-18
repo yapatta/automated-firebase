@@ -1,4 +1,4 @@
-# automated-firebase
+# Automated Firebase Project Setup
 
 Automated Firebase Project Setup CLI Tool
 
